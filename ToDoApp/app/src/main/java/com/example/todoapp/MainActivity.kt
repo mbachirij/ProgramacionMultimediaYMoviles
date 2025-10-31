@@ -1,5 +1,6 @@
 package com.example.todoapp
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -14,6 +15,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -21,6 +23,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -41,7 +44,7 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun Login() {
-
+    val context = LocalContext.current // 🔹 Obtenemos el contexto actual
     Column(
         modifier = Modifier.fillMaxSize()
             .padding(10.dp)
@@ -57,7 +60,7 @@ fun Login() {
 
         Spacer(modifier = Modifier.height(10.dp))
 
-        TextField(
+        OutlinedTextField(
             value = "", //Valor vacío
             onValueChange = {}, // aún sin nada al escribir
             label = { Text("Nombre") },
@@ -66,7 +69,7 @@ fun Login() {
                 .fillMaxWidth()
                 .padding(16.dp)
         )
-        TextField(
+        OutlinedTextField(
             value = "", //Valor vacío
             onValueChange = {}, // aún sin nada al escribir
             label = {
@@ -78,7 +81,11 @@ fun Login() {
         )
 
         Button(
-            onClick = {},
+            onClick = {
+                // 🔹 Creamos un intent para abrir la SecondActivity
+                val intent = Intent(context, SecondActivity::class.java)
+                context.startActivity(intent)
+            },
             modifier = Modifier.fillMaxWidth()
                 .padding(top = 16.dp, start = 16.dp, end = 16.dp)
 
