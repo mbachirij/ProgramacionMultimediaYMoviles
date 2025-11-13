@@ -181,18 +181,17 @@ fun Pantalla2() {
                     tint = Color.Black,
                     modifier = Modifier.size(24.dp)
                 )
-            }
-
-            DropdownMenu(
-                expanded = dropd,
-                onDismissRequest = { dropd = false }
-            ) {
-                DropdownMenuItem(
-                    text = { Text("¿¿Ajustes??") },
-                    onClick = {
-                        dropd = false
-                    }
-                )
+                DropdownMenu(
+                    expanded = dropd,
+                    onDismissRequest = { dropd = false }
+                ) {
+                    DropdownMenuItem(
+                        text = { Text("¿¿Ajustes??") },
+                        onClick = {
+                            dropd = false
+                        }
+                    )
+                }
             }
         }
 
