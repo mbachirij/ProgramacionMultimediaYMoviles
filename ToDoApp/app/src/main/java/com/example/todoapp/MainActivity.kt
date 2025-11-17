@@ -16,16 +16,23 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.RestoreFromTrash
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
@@ -40,8 +47,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ModifierLocalBeyondBoundsLayout
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat.enableEdgeToEdge
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -153,28 +162,80 @@ fun Pantalla2() {
 
     var nuevaTarea by remember { mutableStateOf("") }
     val listaTareas = remember { mutableStateListOf<String>() }
-    var dropd by remember { mutableStateOf(false) }
+    var preferencias by remember { mutableStateOf(false) }
+    var mostrarpreferencias by remember { mutableStateOf(false) }
+    var colorText by remember { mutableStateOf(Color.Yellow) }
+    var modOscuro by remember { mutableStateOf(false) }
+
+    if (mostrarpreferencias){
+
+        AlertDialog(
+            onDismissRequest = { mostrarpreferencias = false },
+            title = { Text("Preferencias color texto") },
+            text = {
+                Column {
+                    Text("Color de las tareas ", fontWeight = FontWeight.Bold)
+
+                    Row(verticalAlignment = Alignment.CenterVertically){
+                        RadioButton(
+                            selected = colorText == Color.Red,
+                            onClick = { colorText = Color.Red }
+                        )
+                        Text("Rojo")
+                    }
+                    Row(verticalAlignment = Alignment.CenterVertically){
+                        RadioButton(
+                            selected = colorText == Color.Blue,
+                            onClick = { colorText = Color.Blue }
+                        )
+                        Text("Azul")
+                    }
+                    Row(verticalAlignment = Alignment.CenterVertically){
+                        RadioButton(
+                            selected = colorText == Color.Yellow,
+                            onClick = { colorText = Color.Yellow }
+                        )
+                        Text("Amarillo")
+                    }
+
+                    Row(verticalAlignment = Alignment.CenterVertically){
+                        Switch(
+                            checked = modOscuro,
+                            onCheckedChange = { modOscuro = it}
+                        )
+                        Text("Modo Oscuro")
+                    }
+
+                }
+            },
+
+            confirmButton = {
+                Button(onClick = {mostrarpreferencias = false}) {
+                    Text("Aceptar")
+                }
+            }
+        )
+    }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(10.dp)
-            .background(Color(0xFFE3F2FD)),
-
+            .background( if (modOscuro) Color.LightGray else Color.White ),
     ) {
         Row(
             modifier = Modifier.fillMaxWidth()
-                .padding(horizontal = 8.dp, vertical = 8.dp),
+                .padding(top = 30.dp, start = 16.dp, end = 16.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
 
         ) {
             Text(
                 "Hola, $globalNombre ($globalAlias)",
-                color = Color.Black
+                color = Color.Black,
+                fontSize = 25.sp
             )
 
-            IconButton(onClick = { dropd = true }) {
+            IconButton(onClick = { preferencias = true }) {
                 Icon(
                     imageVector = Icons.Filled.MoreVert,
                     contentDescription = "Opciones",
@@ -182,13 +243,14 @@ fun Pantalla2() {
                     modifier = Modifier.size(24.dp)
                 )
                 DropdownMenu(
-                    expanded = dropd,
-                    onDismissRequest = { dropd = false }
+                    expanded = preferencias,
+                    onDismissRequest = { preferencias = false }
                 ) {
                     DropdownMenuItem(
-                        text = { Text("¿¿Ajustes??") },
+                        text = { Text("change color") },
                         onClick = {
-                            dropd = false
+                            preferencias = false
+                            mostrarpreferencias = true
                         }
                     )
                 }
@@ -213,9 +275,6 @@ fun Pantalla2() {
                 modifier = Modifier
                     .weight(1f)
             )
-
-
-
             Button(
                 onClick = {
                     if (nuevaTarea.isNotBlank()){
@@ -224,50 +283,43 @@ fun Pantalla2() {
                     }
                 },
                 modifier = Modifier.align(Alignment.CenterVertically)
-
-
-
-            ) {
-                Text(
-                    "Añadir"
-                )
-            }
+            ) { Text("Añadir") }
 
         }
         Spacer(modifier = Modifier.height(16.dp))
 
-        Column(
-            modifier = Modifier.fillMaxWidth(),
+        LazyColumn(
+            modifier = Modifier.fillMaxWidth()
+                .padding(10.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            listaTareas.forEach { nuevaTarea ->
+            items(listaTareas) { nuevaTarea ->
 
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = 4.dp),
-
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(nuevaTarea,
-                        modifier = Modifier.weight(1f))
-
-
-
+                    Text(
+                        nuevaTarea,
+                        modifier = Modifier.weight(1f),
+                        color = colorText,
+                        fontSize = 30.sp
+                        )
                     IconButton(onClick = { listaTareas.remove(nuevaTarea) }) {
-
                         Icon(
-                            imageVector = Icons.Filled.RestoreFromTrash,
+                            imageVector = Icons.Default.Delete,
                             contentDescription = "Eliminar",
                             tint = Color.Black,
-
                             modifier = Modifier
                                 .size(24.dp)
-                        ) } }
+                        )
+                    }
                 }
+                HorizontalDivider(color = Color.Gray, thickness = 1.dp)
+            }
         }
-
-
     }
 }
 
