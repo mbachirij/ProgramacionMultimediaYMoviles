@@ -1,10 +1,17 @@
 package com.example.todoapp
 
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -22,6 +29,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.RestoreFromTrash
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
@@ -36,6 +44,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -51,12 +60,17 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat.enableEdgeToEdge
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.todoapp.ui.theme.TodoappTheme
+import kotlinx.coroutines.delay
 import org.intellij.lang.annotations.JdkConstants
+import java.util.jar.Manifest
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -143,7 +157,7 @@ fun Login(onIrPantalla2: () -> Unit) {
                     globalAlias = alias
                     onIrPantalla2()
                 }
-                      },
+            },
             modifier = Modifier.fillMaxWidth()
                 .padding(16.dp)
 
@@ -156,7 +170,6 @@ fun Login(onIrPantalla2: () -> Unit) {
 }
 
 
-
 @Composable
 fun Pantalla2() {
 
@@ -167,52 +180,91 @@ fun Pantalla2() {
     var colorText by remember { mutableStateOf(Color.Yellow) }
     var modOscuro by remember { mutableStateOf(false) }
 
-    if (mostrarpreferencias){
+    var textobusqueda by remember { mutableStateOf("") }
+    var mostrardialogoborrar by remember { mutableStateOf(false) }
+    var tareaborrar by remember { mutableStateOf("") }
+    val context = LocalContext.current
 
+    // Notificación: Cuenta 3 minutos y avisa
+    LaunchedEffect(listaTareas.size) {
+        if (listaTareas.isNotEmpty()) {
+            delay(10000L) // 3 minutos (180.000 milisegundos)
+
+            val channelId = "canal_inactividad"
+            val notificationManager = context.getSystemService(android.content.Context.NOTIFICATION_SERVICE) as NotificationManager
+
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                val channel = NotificationChannel(channelId, "Inactividad", NotificationManager.IMPORTANCE_HIGH)
+                notificationManager.createNotificationChannel(channel)
+            }
+
+
+            val builder = NotificationCompat.Builder(context, channelId)
+                .setSmallIcon(android.R.drawable.ic_dialog_info)
+                .setContentTitle("Recordatorio")
+                .setContentText("Hace rato que no añades ninguna tarea")
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+
+            try {
+
+                notificationManager.notify(1, builder.build())
+
+            } catch (e: Exception) {
+
+            }
+        }
+    }
+
+
+    if (mostrarpreferencias){
         AlertDialog(
             onDismissRequest = { mostrarpreferencias = false },
             title = { Text("Preferencias color texto") },
             text = {
                 Column {
                     Text("Color de las tareas ", fontWeight = FontWeight.Bold)
-
                     Row(verticalAlignment = Alignment.CenterVertically){
-                        RadioButton(
-                            selected = colorText == Color.Red,
-                            onClick = { colorText = Color.Red }
-                        )
+                        RadioButton(selected = colorText == Color.Red,
+                            onClick = { colorText = Color.Red })
                         Text("Rojo")
                     }
                     Row(verticalAlignment = Alignment.CenterVertically){
-                        RadioButton(
-                            selected = colorText == Color.Blue,
-                            onClick = { colorText = Color.Blue }
-                        )
+                        RadioButton(selected = colorText == Color.Blue,
+                            onClick = { colorText = Color.Blue })
                         Text("Azul")
                     }
                     Row(verticalAlignment = Alignment.CenterVertically){
-                        RadioButton(
-                            selected = colorText == Color.Yellow,
-                            onClick = { colorText = Color.Yellow }
-                        )
+                        RadioButton(selected = colorText == Color.Yellow,
+                            onClick = { colorText = Color.Yellow })
                         Text("Amarillo")
                     }
-
                     Row(verticalAlignment = Alignment.CenterVertically){
-                        Switch(
-                            checked = modOscuro,
-                            onCheckedChange = { modOscuro = it}
-                        )
+                        Switch(checked = modOscuro,
+                            onCheckedChange = { modOscuro = it})
                         Text("Modo Oscuro")
                     }
-
                 }
             },
-
             confirmButton = {
-                Button(onClick = {mostrarpreferencias = false}) {
-                    Text("Aceptar")
-                }
+                Button(onClick = {mostrarpreferencias = false}) { Text("Aceptar") }
+            }
+        )
+    }
+
+    if (mostrardialogoborrar) {
+        AlertDialog(
+            onDismissRequest = { mostrardialogoborrar = false },
+            title = { Text("Confirmar eliminación") },
+            text = { Text("¿Seguro que quieres borrar la tarea '$tareaborrar'?") },
+            confirmButton = {
+                Button(onClick = {
+                    listaTareas.remove(tareaborrar) // Aquí borramos de verdad
+                    mostrardialogoborrar = false
+                }) { Text("Sí, borrar") }
+            },
+            dismissButton = {
+                Button(onClick = { mostrardialogoborrar = false }) { Text("Cancelar") }
             }
         )
     }
@@ -258,6 +310,21 @@ fun Pantalla2() {
         }
 
         Spacer(modifier = Modifier.height(16.dp))
+        // Barra de Búsqueda
+        OutlinedTextField(
+            value = textobusqueda,
+            onValueChange = { textobusqueda = it },
+            label = { Text("Buscar tarea...") },
+            leadingIcon = {
+                Icon(Icons.Filled.Search,
+                    contentDescription = null)
+            },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth()
+                .padding(horizontal = 16.dp)
+        )
+
+        Spacer(modifier = Modifier.height(10.dp))
 
         Row(
             modifier = Modifier.fillMaxWidth()
@@ -293,7 +360,14 @@ fun Pantalla2() {
                 .padding(10.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            items(listaTareas) { nuevaTarea ->
+            val listaParaMostrar =
+                if (textobusqueda.isEmpty())
+                    listaTareas
+                else
+                    listaTareas.filter {
+                        it.contains(textobusqueda, ignoreCase = true) }
+
+            items(listaParaMostrar) { nuevaTarea ->
 
                 Row(
                     modifier = Modifier
@@ -306,8 +380,12 @@ fun Pantalla2() {
                         modifier = Modifier.weight(1f),
                         color = colorText,
                         fontSize = 30.sp
-                        )
-                    IconButton(onClick = { listaTareas.remove(nuevaTarea) }) {
+                    )
+
+                    IconButton(onClick = {
+                        tareaborrar = nuevaTarea
+                        mostrardialogoborrar = true
+                    }) {
                         Icon(
                             imageVector = Icons.Default.Delete,
                             contentDescription = "Eliminar",
