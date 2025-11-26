@@ -83,24 +83,25 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
-
+// --- VARIABLES GLOBALES ---
+// Las pongo fuera para poder acceder a ellas desde cualquier pantalla
+// Son para guardar el nombre y alias del Login y mostrarlos en la Pantalla 2
 var globalNombre = ""
 var globalAlias = ""
 
 @Composable
 fun TodoApp(){
-
+    // variable navController para gestionar la navegación
     var navController = rememberNavController()
 
+    // Aquí definimos las pantallas de la app y sus rutas
     NavHost(
         navController = navController,
-        startDestination = "login"
-
+        startDestination = "login" // Es la primera pantalla que se ve
     ){
         composable("login") {
-
+            // Le pasamos la funcion para navegar a la siguiente pantalla
             Login(onIrPantalla2 = { navController.navigate("pantalla2")})
-
         }
         composable("pantalla2") {
             Pantalla2()
@@ -109,9 +110,10 @@ fun TodoApp(){
 }
 
 
-
+// Pantalla 1: LOGIN
 @Composable
 fun Login(onIrPantalla2: () -> Unit) {
+    // Estados para los campos de texto
     var nombre by remember { mutableStateOf("") }
     var alias by remember { mutableStateOf("") }
 
@@ -121,6 +123,7 @@ fun Login(onIrPantalla2: () -> Unit) {
             .background(Color.White),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        // Logo de la app (imagen en la carpeta drawable)
         Image(
             painter = painterResource(id = R.drawable.logoapp),
             contentDescription = "LogoApp",
@@ -129,7 +132,7 @@ fun Login(onIrPantalla2: () -> Unit) {
         )
 
         Spacer(modifier = Modifier.height(10.dp))
-
+        // Campo nombre
         OutlinedTextField(
             value = nombre,
             onValueChange = { nombre = it},
@@ -139,6 +142,7 @@ fun Login(onIrPantalla2: () -> Unit) {
                 .fillMaxWidth()
                 .padding(16.dp)
         )
+        // Campo Alias
         OutlinedTextField(
             value = alias,
             onValueChange = { alias = it },
@@ -149,18 +153,17 @@ fun Login(onIrPantalla2: () -> Unit) {
                 .fillMaxWidth()
                 .padding(top = 10.dp, start = 16.dp, end = 16.dp)
         )
-
+        // Botón continuar con validación
         Button(
             onClick = {
+                // If para verificar que los campos nombre y alias no están vaciós
                 if (nombre.isNotBlank() && alias.isNotBlank()){
-                    globalNombre = nombre
+                    globalNombre = nombre // guardo en variable global
                     globalAlias = alias
-                    onIrPantalla2()
+                    onIrPantalla2() // navegamos a pantalla2
                 }
             },
-            modifier = Modifier.fillMaxWidth()
-                .padding(16.dp)
-
+            modifier = Modifier.fillMaxWidth().padding(16.dp)
         ) {
             Text("Continuar")
         }
@@ -174,10 +177,17 @@ fun Login(onIrPantalla2: () -> Unit) {
 fun Pantalla2() {
 
     var nuevaTarea by remember { mutableStateOf("") }
+    // mutableStateOf permite que la lista se actualice en pantalla al añadir/borrar
     val listaTareas = remember { mutableStateListOf<String>() }
+
+    // estados para Preferencias
+    // controla el menú desplegable
     var preferencias by remember { mutableStateOf(false) }
+    // controla el diálogo de ajustes
     var mostrarpreferencias by remember { mutableStateOf(false) }
+    // color del texto por defecto amarillo
     var colorText by remember { mutableStateOf(Color.Yellow) }
+    // switch modo oscuro
     var modOscuro by remember { mutableStateOf(false) }
 
     var textobusqueda by remember { mutableStateOf("") }
@@ -299,7 +309,7 @@ fun Pantalla2() {
                     onDismissRequest = { preferencias = false }
                 ) {
                     DropdownMenuItem(
-                        text = { Text("change color") },
+                        text = { Text("preferencias") },
                         onClick = {
                             preferencias = false
                             mostrarpreferencias = true
