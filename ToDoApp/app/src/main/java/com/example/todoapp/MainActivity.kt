@@ -177,29 +177,36 @@ fun Login(onIrPantalla2: () -> Unit) {
 fun Pantalla2() {
 
     var nuevaTarea by remember { mutableStateOf("") }
-    // mutableStateOf permite que la lista se actualice en pantalla al añadir/borrar
+    // MutableStateOf permite que la lista se actualice en pantalla al añadir/borrar
     val listaTareas = remember { mutableStateListOf<String>() }
 
-    // estados para Preferencias
-    // controla el menú desplegable
+    // Estados para Preferencias
+    // Controla el menú desplegable
     var preferencias by remember { mutableStateOf(false) }
-    // controla el diálogo de ajustes
+    // Controla el diálogo de ajustes
     var mostrarpreferencias by remember { mutableStateOf(false) }
-    // color del texto por defecto amarillo
+    // Color del texto por defecto amarillo
     var colorText by remember { mutableStateOf(Color.Yellow) }
-    // switch modo oscuro
+    // Switch modo oscuro
     var modOscuro by remember { mutableStateOf(false) }
 
+    // Buscador
     var textobusqueda by remember { mutableStateOf("") }
+    // Diálogo borrar
     var mostrardialogoborrar by remember { mutableStateOf(false) }
+    // Tarea temporal a borrar
     var tareaborrar by remember { mutableStateOf("") }
+
+    // Contexto necesario para notificaciones
     val context = LocalContext.current
 
-    // Notificación: Cuenta 3 minutos y avisa
+    // (LaunchedEffect)
+    // Notificación: que Cuenta 3 minutos y avisa
     LaunchedEffect(listaTareas.size) {
         if (listaTareas.isNotEmpty()) {
             delay(10000L) // 3 minutos (180.000 milisegundos)
 
+            // Configuración obligatoria para Android8.0+ (Canales)
             val channelId = "canal_inactividad"
             val notificationManager = context.getSystemService(android.content.Context.NOTIFICATION_SERVICE) as NotificationManager
 
@@ -209,7 +216,7 @@ fun Pantalla2() {
                 notificationManager.createNotificationChannel(channel)
             }
 
-
+            // Construcción de la notificación
             val builder = NotificationCompat.Builder(context, channelId)
                 .setSmallIcon(android.R.drawable.ic_dialog_info)
                 .setContentTitle("Recordatorio")
@@ -217,16 +224,14 @@ fun Pantalla2() {
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
 
             try {
-
                 notificationManager.notify(1, builder.build())
-
             } catch (e: Exception) {
-
+                // Capturamos el error si falta el permiso POST_NOTIFICATIONS
             }
         }
     }
 
-
+    // Diálogo de Preferencias
     if (mostrarpreferencias){
         AlertDialog(
             onDismissRequest = { mostrarpreferencias = false },
@@ -234,6 +239,7 @@ fun Pantalla2() {
             text = {
                 Column {
                     Text("Color de las tareas ", fontWeight = FontWeight.Bold)
+                    // Opciones de color
                     Row(verticalAlignment = Alignment.CenterVertically){
                         RadioButton(selected = colorText == Color.Red,
                             onClick = { colorText = Color.Red })
@@ -249,6 +255,7 @@ fun Pantalla2() {
                             onClick = { colorText = Color.Yellow })
                         Text("Amarillo")
                     }
+                    // Switch Modo Oscuro
                     Row(verticalAlignment = Alignment.CenterVertically){
                         Switch(checked = modOscuro,
                             onCheckedChange = { modOscuro = it})
@@ -257,33 +264,45 @@ fun Pantalla2() {
                 }
             },
             confirmButton = {
-                Button(onClick = {mostrarpreferencias = false}) { Text("Aceptar") }
+                Button(onClick = { mostrarpreferencias = false }) {
+                    Text("Aceptar")
+                }
             }
         )
     }
-
+    // Diálogo de Confirmación de Borrado
     if (mostrardialogoborrar) {
         AlertDialog(
+            // onDismissRequest para cerrar el diálogo mostrardialogo = false
             onDismissRequest = { mostrardialogoborrar = false },
+            // Título del diálogo
             title = { Text("Confirmar eliminación") },
+            // Pregunta del diálogo
             text = { Text("¿Seguro que quieres borrar la tarea '$tareaborrar'?") },
             confirmButton = {
                 Button(onClick = {
+                    // Aquí ocurre el borrado!!!
                     listaTareas.remove(tareaborrar) // Aquí borramos de verdad
                     mostrardialogoborrar = false
                 }) { Text("Sí, borrar") }
             },
             dismissButton = {
-                Button(onClick = { mostrardialogoborrar = false }) { Text("Cancelar") }
+                Button(onClick = { mostrardialogoborrar = false }) {
+                    Text("Cancelar")
+                }
             }
         )
     }
-
+    /*
+     * CONFIGURACIÓN PANTALLA PRINCIPAL DE PANTALLA 2
+     */
     Column(
         modifier = Modifier
             .fillMaxSize()
+            // Aplicamos fondo dinámico según el switch de modo oscuro
             .background( if (modOscuro) Color.LightGray else Color.White ),
     ) {
+        // Cabecera con Saludo y Menú de Opciones
         Row(
             modifier = Modifier.fillMaxWidth()
                 .padding(top = 30.dp, start = 16.dp, end = 16.dp),
@@ -296,7 +315,7 @@ fun Pantalla2() {
                 color = Color.Black,
                 fontSize = 25.sp
             )
-
+            // Botón de opciones (3 puntos)
             IconButton(onClick = { preferencias = true }) {
                 Icon(
                     imageVector = Icons.Filled.MoreVert,
@@ -304,15 +323,18 @@ fun Pantalla2() {
                     tint = Color.Black,
                     modifier = Modifier.size(24.dp)
                 )
+                // ----- DROPDOWNMENU -----
                 DropdownMenu(
                     expanded = preferencias,
+                    // Es para cuando pulses fuera del menú se cierre
                     onDismissRequest = { preferencias = false }
                 ) {
+                    // DropdownMenuItem para cada opción del menu
                     DropdownMenuItem(
-                        text = { Text("preferencias") },
+                        text = { Text("Preferencias") },
                         onClick = {
-                            preferencias = false
-                            mostrarpreferencias = true
+                            preferencias = false // Cerrar el menú de preferencias
+                            mostrarpreferencias = true // Abrimos el diálogo de preferencias
                         }
                     )
                 }
@@ -323,12 +345,16 @@ fun Pantalla2() {
         // Barra de Búsqueda
         OutlinedTextField(
             value = textobusqueda,
+            // Filtra automáticamente al escribir
             onValueChange = { textobusqueda = it },
+            // Contenido del TextField
             label = { Text("Buscar tarea...") },
+            // Icono de búsqueda
             leadingIcon = {
                 Icon(Icons.Filled.Search,
                     contentDescription = null)
             },
+            // Permite una sola línea
             singleLine = true,
             modifier = Modifier.fillMaxWidth()
                 .padding(horizontal = 16.dp)
@@ -336,6 +362,7 @@ fun Pantalla2() {
 
         Spacer(modifier = Modifier.height(10.dp))
 
+        // Añadir tarea
         Row(
             modifier = Modifier.fillMaxWidth()
                 .padding(horizontal = 8.dp),
@@ -343,6 +370,7 @@ fun Pantalla2() {
             horizontalArrangement = Arrangement.spacedBy(8.dp)
 
         ) {
+            // Campo de texto para añadir tarea
             OutlinedTextField(
                 value = nuevaTarea,
                 onValueChange = { nuevaTarea = it },
@@ -352,11 +380,13 @@ fun Pantalla2() {
                 modifier = Modifier
                     .weight(1f)
             )
+            // Botón Añadir
             Button(
                 onClick = {
+                    // Si no está vacío se añade a la lista
                     if (nuevaTarea.isNotBlank()){
-                        listaTareas.add(nuevaTarea)
-                        nuevaTarea = ""
+                        listaTareas.add(nuevaTarea) // lo añadimos a la lista
+                        nuevaTarea = "" // limpiamos el campo de texto
                     }
                 },
                 modifier = Modifier.align(Alignment.CenterVertically)
@@ -365,18 +395,24 @@ fun Pantalla2() {
         }
         Spacer(modifier = Modifier.height(16.dp))
 
+        // LazyColumn para mostrar la lista de tareas
         LazyColumn(
             modifier = Modifier.fillMaxWidth()
                 .padding(10.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
+            /*
+             * LÓGICA DE FILTRADO
+             * Si el buscador está vacío, mostramos todo.
+             * Si no, filtramos por coincidencias.
+             */
             val listaParaMostrar =
                 if (textobusqueda.isEmpty())
                     listaTareas
                 else
                     listaTareas.filter {
                         it.contains(textobusqueda, ignoreCase = true) }
-
+            // Recorremos la lista de tareas
             items(listaParaMostrar) { nuevaTarea ->
 
                 Row(
@@ -391,9 +427,11 @@ fun Pantalla2() {
                         color = colorText,
                         fontSize = 30.sp
                     )
-
+                    // Botón Papeleras para borrar tarea
                     IconButton(onClick = {
+                        // Guardamos la tarea a borrar en una variable temporal
                         tareaborrar = nuevaTarea
+                        // Mostramos el diálogo de confirmación
                         mostrardialogoborrar = true
                     }) {
                         Icon(
@@ -405,6 +443,7 @@ fun Pantalla2() {
                         )
                     }
                 }
+                // Separador entre tareas
                 HorizontalDivider(color = Color.Gray, thickness = 1.dp)
             }
         }
