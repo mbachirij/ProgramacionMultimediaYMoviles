@@ -1,5 +1,6 @@
 package com.example.todoapp
 
+import android.app.DatePickerDialog
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
@@ -26,6 +27,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.RestoreFromTrash
@@ -49,6 +51,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -67,9 +70,12 @@ import androidx.core.view.WindowCompat.enableEdgeToEdge
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.room.Room
 import com.example.todoapp.ui.theme.TodoappTheme
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.intellij.lang.annotations.JdkConstants
+import java.util.Calendar
 import java.util.jar.Manifest
 
 class MainActivity : ComponentActivity() {
@@ -175,61 +181,83 @@ fun Login(onIrPantalla2: () -> Unit) {
 
 @Composable
 fun Pantalla2() {
-
-    var nuevaTarea by remember { mutableStateOf("") }
-    // MutableStateOf permite que la lista se actualice en pantalla al añadir/borrar
-    val listaTareas = remember { mutableStateListOf<String>() }
-
-    // Estados para Preferencias
-    // Controla el menú desplegable
-    var preferencias by remember { mutableStateOf(false) }
-    // Controla el diálogo de ajustes
-    var mostrarpreferencias by remember { mutableStateOf(false) }
-    // Color del texto por defecto amarillo
-    var colorText by remember { mutableStateOf(Color.Yellow) }
-    // Switch modo oscuro
-    var modOscuro by remember { mutableStateOf(false) }
-
-    // Buscador
-    var textobusqueda by remember { mutableStateOf("") }
-    // Diálogo borrar
-    var mostrardialogoborrar by remember { mutableStateOf(false) }
-    // Tarea temporal a borrar
-    var tareaborrar by remember { mutableStateOf("") }
-
     // Contexto necesario para notificaciones
     val context = LocalContext.current
+
+    // Scope para ejecutar operaciones de base de datos (suspend fun)
+    val scope = rememberCoroutineScope()
+
+    // CREAR INSTANCIA DE LA BASE DE DATOS
+    val db = remember { Room.databaseBuilder(context, AppDatabase::class.java, "tareas_room.db").build() }
+    val dao = db.tareaDao()
+
+    // --- TAREAS TEXTO/FECHA ---
+    var nuevaTareaTexto by remember { mutableStateOf("") }
+    var nuevaTareaFecha by remember { mutableStateOf("") }
+
+
+    // --- LISTA GUARDA OBJETOS (Tarea) ---
+    val listaTareas = remember { mutableStateListOf<Tarea>() }
+
+    // Estados para Preferencias
+    var preferencias by remember { mutableStateOf(false) } // Controla el menú desplegable
+    var mostrarpreferencias by remember { mutableStateOf(false) } // Controla el diálogo de ajustes
+    var colorText by remember { mutableStateOf(Color.Black) } // Color del texto por defecto NEGRO
+    var modOscuro by remember { mutableStateOf(false) } // Switch modo oscuro
+
+    // --- BUSCADOR Y BORRADO ---
+    var textobusqueda by remember { mutableStateOf("") }
+    var mostrardialogoborrar by remember { mutableStateOf(false) } // Diálogo borrar
+    var tareaborrar by remember { mutableStateOf<Tarea?>(null) } // Objeto Tarea temporal a borrar ahora null
+
+
+    LaunchedEffect(true) {
+        listaTareas.clear()
+        listaTareas.addAll(dao.obtenerTareas())
+    }
+
 
     // (LaunchedEffect)
     // Notificación: que Cuenta 3 minutos y avisa
     LaunchedEffect(listaTareas.size) {
-        if (listaTareas.isNotEmpty()) {
-            delay(10000L) // 3 minutos (180.000 milisegundos)
 
-            // Configuración obligatoria para Android8.0+ (Canales)
-            val channelId = "canal_inactividad"
-            val notificationManager = context.getSystemService(android.content.Context.NOTIFICATION_SERVICE) as NotificationManager
+        delay(180000L) // 3 minutos
 
+        val channelId = "canal_inactividad"
+        val notificationManager =
+            context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                val channel = NotificationChannel(channelId, "Inactividad", NotificationManager.IMPORTANCE_HIGH)
-                notificationManager.createNotificationChannel(channel)
-            }
-
-            // Construcción de la notificación
-            val builder = NotificationCompat.Builder(context, channelId)
-                .setSmallIcon(android.R.drawable.ic_dialog_info)
-                .setContentTitle("Recordatorio")
-                .setContentText("Hace rato que no añades ninguna tarea")
-                .setPriority(NotificationCompat.PRIORITY_HIGH)
-
-            try {
-                notificationManager.notify(1, builder.build())
-            } catch (e: Exception) {
-                // Capturamos el error si falta el permiso POST_NOTIFICATIONS
-            }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                channelId,
+                "Inactividad",
+                NotificationManager.IMPORTANCE_HIGH
+            )
+            notificationManager.createNotificationChannel(channel)
         }
+
+        val builder = NotificationCompat.Builder(context, channelId)
+            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setContentTitle("Recordatorio")
+            .setContentText("Hace rato que no añades ninguna tarea")
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+
+        try {
+            notificationManager.notify(1, builder.build())
+        } catch (_: Exception) {}
     }
+
+    // --- DATE PICKER ---
+    val calendar = Calendar.getInstance()
+    val datePicker = DatePickerDialog(
+        context,
+        { _, year, month, dayOfMonth ->
+            nuevaTareaFecha = "$dayOfMonth/${month + 1}/$year"
+        },
+        calendar.get(Calendar.YEAR),
+        calendar.get(Calendar.MONTH),
+        calendar.get(Calendar.DAY_OF_MONTH)
+    )
 
     // Diálogo de Preferencias
     if (mostrarpreferencias){
@@ -271,19 +299,21 @@ fun Pantalla2() {
         )
     }
     // Diálogo de Confirmación de Borrado
-    if (mostrardialogoborrar) {
+    if (mostrardialogoborrar && tareaborrar != null) {
         AlertDialog(
-            // onDismissRequest para cerrar el diálogo mostrardialogo = false
-            onDismissRequest = { mostrardialogoborrar = false },
-            // Título del diálogo
-            title = { Text("Confirmar eliminación") },
-            // Pregunta del diálogo
-            text = { Text("¿Seguro que quieres borrar la tarea '$tareaborrar'?") },
+            onDismissRequest = { mostrardialogoborrar = false }, // onDismissRequest para cerrar el diálogo mostrardialogo = false
+            title = { Text("Confirmar eliminación") }, // Título del diálogo
+            text = { Text("¿Seguro que quieres borrar la tarea '$tareaborrar'?") }, // Pregunta del diálogo
             confirmButton = {
                 Button(onClick = {
-                    // Aquí ocurre el borrado!!!
-                    listaTareas.remove(tareaborrar) // Aquí borramos de verdad
-                    mostrardialogoborrar = false
+                    // --- ¡¡¡ SCOPE.LAUNCH !!! ---
+                    scope.launch {
+                        // Aquí ocurre el borrado!!!
+                        dao.borrarTarea(tareaborrar!!) // Aquí borramos de verdad
+                        listaTareas.remove(tareaborrar) // Aquí la borramos de la lista
+                        mostrardialogoborrar = false // false para dejar de mostrar el dialogo
+                        tareaborrar = null // tareaborrar lo vaciamos
+                    }
                 }) { Text("Sí, borrar") }
             },
             dismissButton = {
@@ -311,9 +341,10 @@ fun Pantalla2() {
 
         ) {
             Text(
-                "Hola, $globalNombre ($globalAlias)",
-                color = Color.Black,
-                fontSize = 25.sp
+                "Bienvenido, $globalNombre ($globalAlias)",
+                color = if(modOscuro) Color.White else Color.Black,
+                fontSize = 25.sp,
+                fontWeight = FontWeight.Bold
             )
             // Botón de opciones (3 puntos)
             IconButton(onClick = { preferencias = true }) {
@@ -342,20 +373,17 @@ fun Pantalla2() {
         }
 
         Spacer(modifier = Modifier.height(16.dp))
-        // Barra de Búsqueda
+
+        // --- Barra de Búsqueda ---
         OutlinedTextField(
             value = textobusqueda,
-            // Filtra automáticamente al escribir
-            onValueChange = { textobusqueda = it },
-            // Contenido del TextField
-            label = { Text("Buscar tarea...") },
-            // Icono de búsqueda
-            leadingIcon = {
+            onValueChange = { textobusqueda = it }, // Filtra automáticamente al escribir
+            label = { Text("Buscar tarea...") }, // Contenido del TextField
+            leadingIcon = { // Icono de búsqueda
                 Icon(Icons.Filled.Search,
                     contentDescription = null)
             },
-            // Permite una sola línea
-            singleLine = true,
+            singleLine = true, // Permite una sola línea
             modifier = Modifier.fillMaxWidth()
                 .padding(horizontal = 16.dp)
         )
@@ -363,35 +391,58 @@ fun Pantalla2() {
         Spacer(modifier = Modifier.height(10.dp))
 
         // Añadir tarea
-        Row(
-            modifier = Modifier.fillMaxWidth()
-                .padding(horizontal = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-
-        ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 16.dp)) {
             // Campo de texto para añadir tarea
             OutlinedTextField(
-                value = nuevaTarea,
-                onValueChange = { nuevaTarea = it },
+                value = nuevaTareaTexto,
+                onValueChange = { nuevaTareaTexto = it },
                 label = {
                     Text("Nueva tarea")},
                 singleLine = true,
-                modifier = Modifier
-                    .weight(1f)
+                modifier = Modifier.fillMaxWidth()
             )
-            // Botón Añadir
-            Button(
-                onClick = {
-                    // Si no está vacío se añade a la lista
-                    if (nuevaTarea.isNotBlank()){
-                        listaTareas.add(nuevaTarea) // lo añadimos a la lista
-                        nuevaTarea = "" // limpiamos el campo de texto
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                // Campo Fecha (Read Only) con botón calendario
+                OutlinedTextField(
+                    value = nuevaTareaFecha,
+                    onValueChange = {},
+                    label = { Text("Fecha") },
+                    readOnly = true,
+                    modifier = Modifier.weight(1f),
+                    trailingIcon = {
+                        IconButton(onClick = {
+                            datePicker.show()
+                        }) {
+                            Icon(
+                                Icons.Filled.CalendarToday,
+                                contentDescription = "Seleccionar fecha"
+                            )
+                        }
                     }
-                },
-                modifier = Modifier.align(Alignment.CenterVertically)
-            ) { Text("Añadir") }
+                )
 
+                // Botón Añadir
+                Button(
+                    onClick = {
+                        if (nuevaTareaTexto.isNotBlank() && nuevaTareaFecha.isNotBlank()) {
+                            scope.launch {
+                                // Guardar en ROOM
+                                dao.insertarTarea(Tarea(tarea = nuevaTareaTexto, fecha = nuevaTareaFecha))
+                                cargarTareas() // Actualizar lista
+                                nuevaTareaTexto = ""
+                                nuevaTareaFecha = ""
+                            }
+                        } else {
+                            Toast.makeText(context, "Rellena texto y fecha", Toast.LENGTH_SHORT).show()
+                        }
+                    },
+                    modifier = Modifier.align(Alignment.CenterVertically)
+                ) { Text("Añadir") }
+            }
         }
         Spacer(modifier = Modifier.height(16.dp))
 
