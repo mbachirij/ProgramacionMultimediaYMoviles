@@ -432,12 +432,12 @@ fun Pantalla2() {
                             scope.launch {
                                 // Guardar en ROOM
                                 dao.insertarTarea(Tarea(tarea = nuevaTareaTexto, fecha = nuevaTareaFecha))
-                                cargarTareas() // Actualizar lista
+                                //cargarTareas() // Actualizar lista
                                 nuevaTareaTexto = ""
                                 nuevaTareaFecha = ""
                             }
                         } else {
-                            Toast.makeText(context, "Rellena texto y fecha", Toast.LENGTH_SHORT).show()
+                            // Toast.makeText(context, "Rellena texto y fecha", Toast.LENGTH_SHORT).show()
                         }
                     },
                     modifier = Modifier.align(Alignment.CenterVertically)
@@ -462,7 +462,8 @@ fun Pantalla2() {
                     listaTareas
                 else
                     listaTareas.filter {
-                        it.contains(textobusqueda, ignoreCase = true) }
+                        it.contains(textobusqueda, ignoreCase = true)
+                    }
             // Recorremos la lista de tareas
             items(listaParaMostrar) { nuevaTarea ->
 
