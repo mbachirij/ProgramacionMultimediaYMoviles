@@ -12,6 +12,7 @@ interface TareaDao {
     suspend fun insertarTarea(tarea: Tarea)
 
     @Delete
+
     suspend fun borrarTarea(tarea: Tarea)
 
     @Query("SELECT * FROM tareas")

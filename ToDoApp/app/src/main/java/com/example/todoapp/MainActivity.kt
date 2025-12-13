@@ -4,15 +4,12 @@ import android.app.DatePickerDialog
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
-import android.content.Intent
-import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -30,10 +27,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.RestoreFromTrash
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.CheckboxDefaults.colors
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
@@ -41,10 +38,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
-import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -56,7 +52,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ModifierLocalBeyondBoundsLayout
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -64,9 +59,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.app.NotificationCompat
-import androidx.core.app.NotificationManagerCompat
-import androidx.core.content.ContextCompat
-import androidx.core.view.WindowCompat.enableEdgeToEdge
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -74,9 +66,7 @@ import androidx.room.Room
 import com.example.todoapp.ui.theme.TodoappTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import org.intellij.lang.annotations.JdkConstants
 import java.util.Calendar
-import java.util.jar.Manifest
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -90,23 +80,18 @@ class MainActivity : ComponentActivity() {
     }
 }
 // --- VARIABLES GLOBALES ---
-// Las pongo fuera para poder acceder a ellas desde cualquier pantalla
-// Son para guardar el nombre y alias del Login y mostrarlos en la Pantalla 2
 var globalNombre = ""
 var globalAlias = ""
 
 @Composable
 fun TodoApp(){
-    // variable navController para gestionar la navegación
     var navController = rememberNavController()
 
-    // Aquí definimos las pantallas de la app y sus rutas
     NavHost(
         navController = navController,
-        startDestination = "login" // Es la primera pantalla que se ve
+        startDestination = "login"
     ){
         composable("login") {
-            // Le pasamos la funcion para navegar a la siguiente pantalla
             Login(onIrPantalla2 = { navController.navigate("pantalla2")})
         }
         composable("pantalla2") {
@@ -119,54 +104,79 @@ fun TodoApp(){
 // Pantalla 1: LOGIN
 @Composable
 fun Login(onIrPantalla2: () -> Unit) {
-    // Estados para los campos de texto
     var nombre by remember { mutableStateOf("") }
     var alias by remember { mutableStateOf("") }
 
     Column(
         modifier = Modifier.fillMaxSize()
-            .padding(10.dp)
-            .background(Color.White),
+            .background(Color(0xF50E0E0E)),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Logo de la app (imagen en la carpeta drawable)
         Image(
-            painter = painterResource(id = R.drawable.logoapp),
+            painter = painterResource(id = R.drawable.logoappnuevo),
             contentDescription = "LogoApp",
             modifier = Modifier.size(200.dp)
-                .padding(top = 20.dp)
+                .padding(top = 50.dp)
+        )
+
+        Text(
+            text = "Bienvenido, Ingrese su nombre y alias",
+            color = Color.White,
+            fontSize = 15.sp,
+            fontWeight = FontWeight.Bold,
         )
 
         Spacer(modifier = Modifier.height(10.dp))
-        // Campo nombre
         OutlinedTextField(
             value = nombre,
             onValueChange = { nombre = it},
             label = { Text("Nombre") },
             singleLine = true,
+            colors = androidx.compose.material3.TextFieldDefaults.colors(
+                focusedContainerColor = Color.Transparent,
+                unfocusedContainerColor = Color.Transparent,
+                focusedTextColor = Color.White,
+                unfocusedTextColor = Color.White,
+                focusedIndicatorColor = Color.White,
+                unfocusedIndicatorColor = Color.Gray,
+                focusedLabelColor = Color.White,
+                unfocusedLabelColor = Color.Gray,
+                cursorColor = Color.White
+            ),
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp)
         )
-        // Campo Alias
         OutlinedTextField(
             value = alias,
             onValueChange = { alias = it },
-            label = {
-                Text("Alias")},
+            label = { Text("Alias")},
             singleLine = true,
+            colors = androidx.compose.material3.TextFieldDefaults.colors(
+                focusedContainerColor = Color.Transparent,
+                unfocusedContainerColor = Color.Transparent,
+                focusedTextColor = Color.White,
+                unfocusedTextColor = Color.White,
+                focusedIndicatorColor = Color.White,
+                unfocusedIndicatorColor = Color.Gray,
+                focusedLabelColor = Color.White,
+                unfocusedLabelColor = Color.Gray,
+                cursorColor = Color.White
+            ),
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(top = 10.dp, start = 16.dp, end = 16.dp)
         )
-        // Botón continuar con validación
         Button(
+            colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                containerColor = Color.White,
+                contentColor = Color.Black
+            ),
             onClick = {
-                // If para verificar que los campos nombre y alias no están vaciós
                 if (nombre.isNotBlank() && alias.isNotBlank()){
-                    globalNombre = nombre // guardo en variable global
+                    globalNombre = nombre
                     globalAlias = alias
-                    onIrPantalla2() // navegamos a pantalla2
+                    onIrPantalla2()
                 }
             },
             modifier = Modifier.fillMaxWidth().padding(16.dp)
@@ -181,46 +191,41 @@ fun Login(onIrPantalla2: () -> Unit) {
 
 @Composable
 fun Pantalla2() {
-    // Contexto necesario para notificaciones
     val context = LocalContext.current
-
-    // Scope para ejecutar operaciones de base de datos (suspend fun)
     val scope = rememberCoroutineScope()
 
-    // CREAR INSTANCIA DE LA BASE DE DATOS
-    val db = remember { Room.databaseBuilder(context, AppDatabase::class.java, "tareas_room.db").build() }
+    val db = remember {
+        Room.databaseBuilder(
+            context,
+            AppDatabase::class.java,
+            "tareas_room.db"
+        )
+            .allowMainThreadQueries()
+            .build()
+    }
     val dao = db.tareaDao()
 
-    // --- TAREAS TEXTO/FECHA ---
     var nuevaTareaTexto by remember { mutableStateOf("") }
     var nuevaTareaFecha by remember { mutableStateOf("") }
 
-
-    // --- LISTA GUARDA OBJETOS (Tarea) ---
     val listaTareas = remember { mutableStateListOf<Tarea>() }
 
-    // Estados para Preferencias
-    var preferencias by remember { mutableStateOf(false) } // Controla el menú desplegable
-    var mostrarpreferencias by remember { mutableStateOf(false) } // Controla el diálogo de ajustes
-    var colorText by remember { mutableStateOf(Color.Black) } // Color del texto por defecto NEGRO
-    var modOscuro by remember { mutableStateOf(false) } // Switch modo oscuro
+    var preferencias by remember { mutableStateOf(false) }
+    var mostrarpreferencias by remember { mutableStateOf(false) }
+    var colorText by remember { mutableStateOf(Color.White) }
+    var modOscuro by remember { mutableStateOf(false) }
 
-    // --- BUSCADOR Y BORRADO ---
     var textobusqueda by remember { mutableStateOf("") }
-    var mostrardialogoborrar by remember { mutableStateOf(false) } // Diálogo borrar
-    var tareaborrar by remember { mutableStateOf<Tarea?>(null) } // Objeto Tarea temporal a borrar ahora null
-
+    var mostrardialogoborrar by remember { mutableStateOf(false) }
+    var tareaborrar by remember { mutableStateOf<Tarea?>(null) }
 
     LaunchedEffect(true) {
+        val tareas = dao.obtenerTareas()
         listaTareas.clear()
-        listaTareas.addAll(dao.obtenerTareas())
+        listaTareas.addAll(tareas)
     }
 
-
-    // (LaunchedEffect)
-    // Notificación: que Cuenta 3 minutos y avisa
     LaunchedEffect(listaTareas.size) {
-
         delay(180000L) // 3 minutos
 
         val channelId = "canal_inactividad"
@@ -247,7 +252,6 @@ fun Pantalla2() {
         } catch (_: Exception) {}
     }
 
-    // --- DATE PICKER ---
     val calendar = Calendar.getInstance()
     val datePicker = DatePickerDialog(
         context,
@@ -259,7 +263,6 @@ fun Pantalla2() {
         calendar.get(Calendar.DAY_OF_MONTH)
     )
 
-    // Diálogo de Preferencias
     if (mostrarpreferencias){
         AlertDialog(
             onDismissRequest = { mostrarpreferencias = false },
@@ -267,7 +270,6 @@ fun Pantalla2() {
             text = {
                 Column {
                     Text("Color de las tareas ", fontWeight = FontWeight.Bold)
-                    // Opciones de color
                     Row(verticalAlignment = Alignment.CenterVertically){
                         RadioButton(selected = colorText == Color.Red,
                             onClick = { colorText = Color.Red })
@@ -283,7 +285,6 @@ fun Pantalla2() {
                             onClick = { colorText = Color.Yellow })
                         Text("Amarillo")
                     }
-                    // Switch Modo Oscuro
                     Row(verticalAlignment = Alignment.CenterVertically){
                         Switch(checked = modOscuro,
                             onCheckedChange = { modOscuro = it})
@@ -298,74 +299,80 @@ fun Pantalla2() {
             }
         )
     }
-    // Diálogo de Confirmación de Borrado
-    if (mostrardialogoborrar && tareaborrar != null) {
-        AlertDialog(
-            onDismissRequest = { mostrardialogoborrar = false }, // onDismissRequest para cerrar el diálogo mostrardialogo = false
-            title = { Text("Confirmar eliminación") }, // Título del diálogo
-            text = { Text("¿Seguro que quieres borrar la tarea '$tareaborrar'?") }, // Pregunta del diálogo
-            confirmButton = {
-                Button(onClick = {
-                    // --- ¡¡¡ SCOPE.LAUNCH !!! ---
-                    scope.launch {
-                        // Aquí ocurre el borrado!!!
-                        dao.borrarTarea(tareaborrar!!) // Aquí borramos de verdad
-                        listaTareas.remove(tareaborrar) // Aquí la borramos de la lista
-                        mostrardialogoborrar = false // false para dejar de mostrar el dialogo
-                        tareaborrar = null // tareaborrar lo vaciamos
+
+    if (mostrardialogoborrar) {
+        val tareaParaBorrar = tareaborrar
+        if (tareaParaBorrar != null) {
+            AlertDialog(
+                onDismissRequest = { mostrardialogoborrar = false },
+                title = { Text("Confirmar eliminación") },
+                text = { Text("¿Seguro que quieres borrar la tarea '${tareaParaBorrar.tarea}'?") },
+                confirmButton = {
+                    Button(onClick = {
+                        scope.launch {
+                            dao.borrarTarea(tareaParaBorrar)
+                            listaTareas.remove(tareaParaBorrar)
+                            mostrardialogoborrar = false
+                            tareaborrar = null
+                        }
+                    }) { Text("Sí, borrar") }
+                },
+                dismissButton = {
+                    Button(onClick = { mostrardialogoborrar = false }) {
+                        Text("Cancelar")
                     }
-                }) { Text("Sí, borrar") }
-            },
-            dismissButton = {
-                Button(onClick = { mostrardialogoborrar = false }) {
-                    Text("Cancelar")
                 }
-            }
-        )
+            )
+        }
     }
-    /*
-     * CONFIGURACIÓN PANTALLA PRINCIPAL DE PANTALLA 2
-     */
+
     Column(
         modifier = Modifier
             .fillMaxSize()
-            // Aplicamos fondo dinámico según el switch de modo oscuro
-            .background( if (modOscuro) Color.LightGray else Color.White ),
+            .background( if (modOscuro) Color(0xFF000000) else Color(0xF50E0E0E) ),
     ) {
-        // Cabecera con Saludo y Menú de Opciones
         Row(
             modifier = Modifier.fillMaxWidth()
-                .padding(top = 30.dp, start = 16.dp, end = 16.dp),
+                .padding(top = 70.dp, start = 16.dp, end = 16.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
 
         ) {
             Text(
                 "Bienvenido, $globalNombre ($globalAlias)",
-                color = if(modOscuro) Color.White else Color.Black,
+                color = Color.White,
                 fontSize = 25.sp,
                 fontWeight = FontWeight.Bold
             )
-            // Botón de opciones (3 puntos)
-            IconButton(onClick = { preferencias = true }) {
+            IconButton(
+                colors = androidx.compose.material3.IconButtonDefaults.iconButtonColors(
+                    containerColor = Color.Transparent,
+                    contentColor = Color.White
+                ),
+                onClick = { preferencias = true }
+            ) {
                 Icon(
                     imageVector = Icons.Filled.MoreVert,
                     contentDescription = "Opciones",
-                    tint = Color.Black,
+                    tint = Color.White,
                     modifier = Modifier.size(24.dp)
                 )
-                // ----- DROPDOWNMENU -----
                 DropdownMenu(
                     expanded = preferencias,
-                    // Es para cuando pulses fuera del menú se cierre
-                    onDismissRequest = { preferencias = false }
+                    onDismissRequest = { preferencias = false },
+                    modifier = Modifier.background(Color(0xF50E0E0E))
                 ) {
-                    // DropdownMenuItem para cada opción del menu
                     DropdownMenuItem(
-                        text = { Text("Preferencias") },
+                        text = { Text("Preferencias", color = Color.White) },
                         onClick = {
-                            preferencias = false // Cerrar el menú de preferencias
-                            mostrarpreferencias = true // Abrimos el diálogo de preferencias
+                            preferencias = false
+                            mostrarpreferencias = true
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Exportar tareas", color = Color.White) },
+                        onClick = {
+                            preferencias = false
                         }
                     )
                 }
@@ -374,99 +381,126 @@ fun Pantalla2() {
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // --- Barra de Búsqueda ---
         OutlinedTextField(
             value = textobusqueda,
-            onValueChange = { textobusqueda = it }, // Filtra automáticamente al escribir
-            label = { Text("Buscar tarea...") }, // Contenido del TextField
-            leadingIcon = { // Icono de búsqueda
+            onValueChange = { textobusqueda = it },
+            label = { Text("Buscar tarea...") },
+            leadingIcon = { 
                 Icon(Icons.Filled.Search,
                     contentDescription = null)
             },
-            singleLine = true, // Permite una sola línea
+            singleLine = true,
+            colors = androidx.compose.material3.TextFieldDefaults.colors(
+                focusedContainerColor = Color.Transparent,
+                unfocusedContainerColor = Color.Transparent,
+                focusedTextColor = Color.White,
+                unfocusedTextColor = Color.White,
+                focusedIndicatorColor = Color.White,
+                unfocusedIndicatorColor = Color.Gray,
+                focusedLabelColor = Color.White,
+                unfocusedLabelColor = Color.Gray,
+                cursorColor = Color.White
+            ),
             modifier = Modifier.fillMaxWidth()
                 .padding(horizontal = 16.dp)
         )
 
         Spacer(modifier = Modifier.height(10.dp))
 
-        // Añadir tarea
         Column(
             modifier = Modifier.padding(horizontal = 16.dp)) {
-            // Campo de texto para añadir tarea
             OutlinedTextField(
                 value = nuevaTareaTexto,
                 onValueChange = { nuevaTareaTexto = it },
-                label = {
-                    Text("Nueva tarea")},
+                label = { Text("Nueva tarea")},
                 singleLine = true,
+                colors = androidx.compose.material3.TextFieldDefaults.colors(
+                    focusedContainerColor = Color.Transparent,
+                    unfocusedContainerColor = Color.Transparent,
+                    focusedTextColor = Color.White,
+                    unfocusedTextColor = Color.White,
+                    focusedIndicatorColor = Color.White,
+                    unfocusedIndicatorColor = Color.Gray,
+                    focusedLabelColor = Color.White,
+                    unfocusedLabelColor = Color.Gray,
+                    cursorColor = Color.White
+                ),
                 modifier = Modifier.fillMaxWidth()
             )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                // Campo Fecha (Read Only) con botón calendario
                 OutlinedTextField(
                     value = nuevaTareaFecha,
-                    onValueChange = {},
+                    onValueChange = { },
                     label = { Text("Fecha") },
                     readOnly = true,
                     modifier = Modifier.weight(1f),
                     trailingIcon = {
-                        IconButton(onClick = {
-                            datePicker.show()
-                        }) {
+                        IconButton(onClick = { datePicker.show() }) {
                             Icon(
                                 Icons.Filled.CalendarToday,
                                 contentDescription = "Seleccionar fecha"
                             )
                         }
-                    }
+                    },
+                    colors = androidx.compose.material3.TextFieldDefaults.colors(
+                        focusedContainerColor = Color.Transparent,
+                        unfocusedContainerColor = Color.Transparent,
+                        focusedTextColor = Color.White,
+                        unfocusedTextColor = Color.White,
+                        focusedIndicatorColor = Color.White,
+                        unfocusedIndicatorColor = Color.Gray,
+                        focusedLabelColor = Color.White,
+                        unfocusedLabelColor = Color.Gray,
+                        cursorColor = Color.White
+                    )
                 )
 
-                // Botón Añadir
                 Button(
+                    colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                        containerColor = Color.White,
+                        contentColor = Color.Black
+                    ),
                     onClick = {
                         if (nuevaTareaTexto.isNotBlank() && nuevaTareaFecha.isNotBlank()) {
                             scope.launch {
-                                // Guardar en ROOM
-                                dao.insertarTarea(Tarea(tarea = nuevaTareaTexto, fecha = nuevaTareaFecha))
-                                //cargarTareas() // Actualizar lista
+                                val nueva = Tarea(fecha = nuevaTareaFecha, tarea = nuevaTareaTexto)
+                                dao.insertarTarea(nueva)
+                                listaTareas.clear()
+                                listaTareas.addAll(dao.obtenerTareas())
+                                Toast.makeText(context, "Tarea añadida", Toast.LENGTH_SHORT).show()
                                 nuevaTareaTexto = ""
                                 nuevaTareaFecha = ""
                             }
                         } else {
-                            // Toast.makeText(context, "Rellena texto y fecha", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, "Rellena texto y fecha", Toast.LENGTH_SHORT).show()
                         }
                     },
-                    modifier = Modifier.align(Alignment.CenterVertically)
                 ) { Text("Añadir") }
             }
         }
         Spacer(modifier = Modifier.height(16.dp))
 
-        // LazyColumn para mostrar la lista de tareas
         LazyColumn(
             modifier = Modifier.fillMaxWidth()
                 .padding(10.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            /*
-             * LÓGICA DE FILTRADO
-             * Si el buscador está vacío, mostramos todo.
-             * Si no, filtramos por coincidencias.
-             */
             val listaParaMostrar =
-                if (textobusqueda.isEmpty())
+                if (textobusqueda.isEmpty()) {
                     listaTareas
-                else
+                } else {
                     listaTareas.filter {
-                        it.contains(textobusqueda, ignoreCase = true)
+                        it.tarea.contains(textobusqueda, ignoreCase = true)
                     }
-            // Recorremos la lista de tareas
-            items(listaParaMostrar) { nuevaTarea ->
-
+                }
+            items(listaParaMostrar) { tarea ->
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -474,28 +508,23 @@ fun Pantalla2() {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        nuevaTarea,
+                        text = "${tarea.tarea} (${tarea.fecha})",
                         modifier = Modifier.weight(1f),
                         color = colorText,
-                        fontSize = 30.sp
+                        fontSize = 20.sp
                     )
-                    // Botón Papeleras para borrar tarea
                     IconButton(onClick = {
-                        // Guardamos la tarea a borrar en una variable temporal
-                        tareaborrar = nuevaTarea
-                        // Mostramos el diálogo de confirmación
+                        tareaborrar = tarea
                         mostrardialogoborrar = true
                     }) {
                         Icon(
                             imageVector = Icons.Default.Delete,
                             contentDescription = "Eliminar",
-                            tint = Color.Black,
-                            modifier = Modifier
-                                .size(24.dp)
+                            tint = Color.White,
+                            modifier = Modifier.size(24.dp)
                         )
                     }
                 }
-                // Separador entre tareas
                 HorizontalDivider(color = Color.Gray, thickness = 1.dp)
             }
         }

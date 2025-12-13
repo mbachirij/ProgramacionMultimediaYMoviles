@@ -15,8 +15,10 @@ runtime = "1.9.5"
 navigationComposeVersion = "2.9.6"
 roomCommonJvm = "2.8.4"
 roomKtx = "2.8.4"
+roomCompiler = "2.8.4"
 
 [libraries]
+androidx-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "roomCompiler" }
 androidx-compose-material-icons-extended = { module = "androidx.compose.material:material-icons-extended", version.ref = "materialIconsExtended" }
 androidx-compose-material-icons-extended-v150 = { module = "androidx.compose.material:material-icons-extended", version.ref = "materialIconsExtendedVersion" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
