@@ -6,10 +6,12 @@ import android.app.NotificationManager
 import android.content.Context
 import android.os.Build
 import android.os.Bundle
+import android.os.Environment
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -30,6 +32,8 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CheckboxDefaults.colors
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -66,6 +70,7 @@ import androidx.room.Room
 import com.example.todoapp.ui.theme.TodoappTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.io.File
 import java.util.Calendar
 
 class MainActivity : ComponentActivity() {
@@ -95,7 +100,7 @@ fun TodoApp(){
             Login(onIrPantalla2 = { navController.navigate("pantalla2")})
         }
         composable("pantalla2") {
-            Pantalla2()
+            Pantalla2(onIrLogin = { navController.navigate("login") })
         }
     }
 }
@@ -187,10 +192,40 @@ fun Login(onIrPantalla2: () -> Unit) {
     }
 
 }
+fun exportarTareas(context: Context, tareas: List<Tarea>) {
+    try {
+        val downloadsDir =
+            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
 
+        val file = File(downloadsDir, "tareas.txt")
+
+        val contenido = buildString {
+            tareas.forEach {
+                append("Tarea: ${it.tarea}\n")
+                append("Fecha: ${it.fecha}\n")
+                append("-------------------\n")
+            }
+        }
+
+        file.writeText(contenido)
+
+        Toast.makeText(
+            context,
+            "Tareas exportadas en Descargas/tareas.txt",
+            Toast.LENGTH_LONG
+        ).show()
+
+    } catch (e: Exception) {
+        Toast.makeText(
+            context,
+            "Error al exportar tareas",
+            Toast.LENGTH_LONG
+        ).show()
+    }
+}
 
 @Composable
-fun Pantalla2() {
+fun Pantalla2(onIrLogin: () -> Unit) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
@@ -341,20 +376,20 @@ fun Pantalla2() {
             Text(
                 "Bienvenido, $globalNombre ($globalAlias)",
                 color = Color.White,
-                fontSize = 25.sp,
+                fontSize = 20.sp,
                 fontWeight = FontWeight.Bold
             )
             IconButton(
                 colors = androidx.compose.material3.IconButtonDefaults.iconButtonColors(
-                    containerColor = Color.Transparent,
-                    contentColor = Color.White
+                    containerColor = Color.White,
+                    contentColor = Color.Black
                 ),
                 onClick = { preferencias = true }
             ) {
                 Icon(
                     imageVector = Icons.Filled.MoreVert,
                     contentDescription = "Opciones",
-                    tint = Color.White,
+                    tint = Color.Black,
                     modifier = Modifier.size(24.dp)
                 )
                 DropdownMenu(
@@ -373,6 +408,17 @@ fun Pantalla2() {
                         text = { Text("Exportar tareas", color = Color.White) },
                         onClick = {
                             preferencias = false
+                            scope.launch {
+                                val tareas = dao.obtenerTareas()
+                                exportarTareas(context, tareas)
+                            }
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Salir", color = Color.White) },
+                        onClick = {
+                            preferencias = false
+                            onIrLogin()
                         }
                     )
                 }
@@ -501,31 +547,58 @@ fun Pantalla2() {
                     }
                 }
             items(listaParaMostrar) { tarea ->
-                Row(
+
+                Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                        .padding(vertical = 6.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = if (modOscuro)
+                            Color(0xFF1E1E1E)
+                        else
+                            Color(0xFF2A2A2A)
+                    ),
+                    border = BorderStroke(1.dp, Color.Gray),
+                    elevation = CardDefaults.cardElevation(5.dp)
                 ) {
-                    Text(
-                        text = "${tarea.tarea} (${tarea.fecha})",
-                        modifier = Modifier.weight(1f),
-                        color = colorText,
-                        fontSize = 20.sp
-                    )
-                    IconButton(onClick = {
-                        tareaborrar = tarea
-                        mostrardialogoborrar = true
-                    }) {
-                        Icon(
-                            imageVector = Icons.Default.Delete,
-                            contentDescription = "Eliminar",
-                            tint = Color.White,
-                            modifier = Modifier.size(24.dp)
-                        )
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+
+                        Column(
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text(
+                                text = tarea.tarea,
+                                color = colorText,
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = tarea.fecha,
+                                color = Color.LightGray,
+                                fontSize = 14.sp
+                            )
+                        }
+
+                        IconButton(
+                            onClick = {
+                                tareaborrar = tarea
+                                mostrardialogoborrar = true
+                            }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Delete,
+                                contentDescription = "Eliminar",
+                                tint = Color.Red
+                            )
+                        }
                     }
                 }
-                HorizontalDivider(color = Color.Gray, thickness = 1.dp)
             }
         }
     }
@@ -535,6 +608,6 @@ fun Pantalla2() {
 @Composable
 fun GreetingPreview() {
     TodoappTheme {
-        Pantalla2()
+        Pantalla2(onIrLogin = {})
     }
 }
