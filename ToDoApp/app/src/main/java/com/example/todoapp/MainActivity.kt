@@ -364,7 +364,7 @@ fun Pantalla2(onIrLogin: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background( if (modOscuro) Color(0xFF000000) else Color(0xF50E0E0E) ),
+            .background( if (modOscuro) Color(0xE6000000) else Color(0xD00E0E0E)),
     ) {
         Row(
             modifier = Modifier.fillMaxWidth()
@@ -381,7 +381,7 @@ fun Pantalla2(onIrLogin: () -> Unit) {
             )
             IconButton(
                 colors = androidx.compose.material3.IconButtonDefaults.iconButtonColors(
-                    containerColor = Color.White,
+                    containerColor = Color(0x41000000),
                     contentColor = Color.Black
                 ),
                 onClick = { preferencias = true }
@@ -389,7 +389,7 @@ fun Pantalla2(onIrLogin: () -> Unit) {
                 Icon(
                     imageVector = Icons.Filled.MoreVert,
                     contentDescription = "Opciones",
-                    tint = Color.Black,
+                    tint = Color.White,
                     modifier = Modifier.size(24.dp)
                 )
                 DropdownMenu(
@@ -510,8 +510,8 @@ fun Pantalla2(onIrLogin: () -> Unit) {
 
                 Button(
                     colors = androidx.compose.material3.ButtonDefaults.buttonColors(
-                        containerColor = Color.White,
-                        contentColor = Color.Black
+                        containerColor = Color(0x41000000),
+                        contentColor = Color.White
                     ),
                     onClick = {
                         if (nuevaTareaTexto.isNotBlank() && nuevaTareaFecha.isNotBlank()) {
