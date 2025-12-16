@@ -4,13 +4,19 @@ import android.app.DatePickerDialog
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
+import android.hardware.Sensor
+import android.hardware.SensorEvent
+import android.hardware.SensorEventListener
+import android.hardware.SensorManager
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -46,6 +52,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -227,6 +234,15 @@ fun exportarTareas(context: Context, tareas: List<Tarea>) {
 @Composable
 fun Pantalla2(onIrLogin: () -> Unit) {
     val context = LocalContext.current
+    val sensorManager =
+        context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
+
+    val proximitySensor = remember {
+        sensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY)
+    }
+
+    var objetoCerca by remember { mutableStateOf(false) }
+
     val scope = rememberCoroutineScope()
 
     val db = remember {
@@ -260,8 +276,34 @@ fun Pantalla2(onIrLogin: () -> Unit) {
         listaTareas.addAll(tareas)
     }
 
+    DisposableEffect(Unit) {
+
+        if (proximitySensor == null) {
+            onDispose { }
+        } else {
+
+            val listener = object : SensorEventListener {
+                override fun onSensorChanged(event: SensorEvent) {
+                    objetoCerca = event.values[0] < proximitySensor.maximumRange
+                }
+
+                override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
+            }
+
+            sensorManager.registerListener(
+                listener,
+                proximitySensor,
+                SensorManager.SENSOR_DELAY_NORMAL
+            )
+
+            onDispose {
+                sensorManager.unregisterListener(listener)
+            }
+        }
+    }
+
     LaunchedEffect(listaTareas.size) {
-        delay(180000L) // 3 minutos
+        delay(1800L) // 3 minutos
 
         val channelId = "canal_inactividad"
         val notificationManager =
@@ -285,6 +327,16 @@ fun Pantalla2(onIrLogin: () -> Unit) {
         try {
             notificationManager.notify(1, builder.build())
         } catch (_: Exception) {}
+    }
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        val permissionLauncher =
+            rememberLauncherForActivityResult(
+                ActivityResultContracts.RequestPermission()
+            ) { }
+
+        LaunchedEffect(Unit) {
+            permissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+        }
     }
 
     val calendar = Calendar.getInstance()
@@ -364,7 +416,11 @@ fun Pantalla2(onIrLogin: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background( if (modOscuro) Color(0xE6000000) else Color(0xD00E0E0E)),
+            .background(
+                if (objetoCerca) Color(0xDAFF0000)
+                else if (modOscuro) Color(0xE6000000)
+                else Color(0xD00E0E0E)
+            ),
     ) {
         Row(
             modifier = Modifier.fillMaxWidth()
