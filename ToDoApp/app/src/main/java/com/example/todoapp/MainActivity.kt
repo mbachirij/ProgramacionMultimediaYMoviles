@@ -32,7 +32,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
@@ -51,6 +50,7 @@ import androidx.compose.material3.RadioButton
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -73,8 +73,8 @@ import androidx.core.app.NotificationCompat
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import androidx.room.Room
 import com.example.todoapp.ui.theme.TodoappTheme
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.File
@@ -92,8 +92,8 @@ class MainActivity : ComponentActivity() {
     }
 }
 // --- VARIABLES GLOBALES ---
-var globalNombre = ""
-var globalAlias = ""
+var globalEmail = ""
+var globalContrasena = ""
 
 @Composable
 fun TodoApp(){
@@ -109,6 +109,9 @@ fun TodoApp(){
         composable("pantalla2") {
             Pantalla2(onIrLogin = { navController.navigate("login") })
         }
+        composable("registro") {
+            Registro(onVolverLogin = { navController.popBackStack() })
+        }
     }
 }
 
@@ -116,8 +119,11 @@ fun TodoApp(){
 // Pantalla 1: LOGIN
 @Composable
 fun Login(onIrPantalla2: () -> Unit) {
-    var nombre by remember { mutableStateOf("") }
-    var alias by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf("") }
+    var contrasena by remember { mutableStateOf("") }
+
+    val auth = FirebaseAuth.getInstance();
+    val context = LocalContext.current
 
     Column(
         modifier = Modifier.fillMaxSize()
@@ -132,7 +138,7 @@ fun Login(onIrPantalla2: () -> Unit) {
         )
 
         Text(
-            text = "Bienvenido, Ingrese su nombre y alias",
+            text = "Bienvenido, Ingrese su email y contraseña",
             color = Color.White,
             fontSize = 15.sp,
             fontWeight = FontWeight.Bold,
@@ -140,9 +146,9 @@ fun Login(onIrPantalla2: () -> Unit) {
 
         Spacer(modifier = Modifier.height(10.dp))
         OutlinedTextField(
-            value = nombre,
-            onValueChange = { nombre = it},
-            label = { Text("Nombre") },
+            value = email,
+            onValueChange = { email = it},
+            label = { Text("E-Mail") },
             singleLine = true,
             colors = androidx.compose.material3.TextFieldDefaults.colors(
                 focusedContainerColor = Color.Transparent,
@@ -160,9 +166,9 @@ fun Login(onIrPantalla2: () -> Unit) {
                 .padding(16.dp)
         )
         OutlinedTextField(
-            value = alias,
-            onValueChange = { alias = it },
-            label = { Text("Alias")},
+            value = contrasena,
+            onValueChange = { contrasena = it },
+            label = { Text("Contraseña")},
             singleLine = true,
             colors = androidx.compose.material3.TextFieldDefaults.colors(
                 focusedContainerColor = Color.Transparent,
@@ -180,20 +186,28 @@ fun Login(onIrPantalla2: () -> Unit) {
                 .padding(top = 10.dp, start = 16.dp, end = 16.dp)
         )
         Button(
-            colors = androidx.compose.material3.ButtonDefaults.buttonColors(
-                containerColor = Color.White,
-                contentColor = Color.Black
-            ),
             onClick = {
-                if (nombre.isNotBlank() && alias.isNotBlank()){
-                    globalNombre = nombre
-                    globalAlias = alias
-                    onIrPantalla2()
+                if (email.isNotBlank() && contrasena.isNotBlank()) {
+                    auth.signInWithEmailAndPassword(email, contrasena)
+                        .addOnSuccessListener {
+                            globalEmail = email
+                            onIrPantalla2()
+                        }
+                        .addOnFailureListener {
+                            Toast.makeText(
+                                context,
+                                "Usuario no registrado",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
                 }
-            },
-            modifier = Modifier.fillMaxWidth().padding(16.dp)
+            }
         ) {
-            Text("Continuar")
+            Text("Iniciar sesión")
+        }
+
+        TextButton(onClick = { onIrRegistro() }) {
+            Text("¿No tienes cuenta? Regístrate", color = Color.White)
         }
 
     }
@@ -245,16 +259,6 @@ fun Pantalla2(onIrLogin: () -> Unit) {
 
     val scope = rememberCoroutineScope()
 
-    val db = remember {
-        Room.databaseBuilder(
-            context,
-            AppDatabase::class.java,
-            "tareas_room.db"
-        )
-            .allowMainThreadQueries()
-            .build()
-    }
-    val dao = db.tareaDao()
 
     var nuevaTareaTexto by remember { mutableStateOf("") }
     var nuevaTareaFecha by remember { mutableStateOf("") }
@@ -430,7 +434,7 @@ fun Pantalla2(onIrLogin: () -> Unit) {
 
         ) {
             Text(
-                "Bienvenido, $globalNombre ($globalAlias)",
+                "Bienvenido, $globalEmail",
                 color = Color.White,
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold
