@@ -50,6 +50,8 @@ dependencies {
     implementation("com.google.firebase:firebase-firestore-ktx")
     implementation("com.google.firebase:firebase-analytics")
 
+    implementation("androidx.compose.material:material-icons-extended")
+
     // --- ANDROID & COMPOSE ---
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
@@ -66,6 +68,7 @@ dependencies {
 
     // Navegación
     implementation(libs.androidx.navigation.compose)
+    implementation(libs.firebase.auth.ktx)
 
     // Iconos extendidos (Opcional, si lo usas)
     // Nota: Si 'libs.androidx...' da error, usa la línea comentada de abajo:
