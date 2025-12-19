@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "204637775664",
-    "project_id": "fir-authdemo-9706c",
-    "storage_bucket": "fir-authdemo-9706c.firebasestorage.app"
+    "project_number": "789782757248",
+    "project_id": "to-doapp-462d4",
+    "storage_bucket": "to-doapp-462d4.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:204637775664:android:c56cf42d4fe88f60b94af5",
+        "mobilesdk_app_id": "1:789782757248:android:855a192a2972ceb3c54b65",
         "android_client_info": {
           "package_name": "com.example.todoapp"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyBn2nPVuPrjJwrIvA9DTo8gAcYpiy9W8k8"
+          "current_key": "AIzaSyDAMpO3j1D549GW83PJTklB8Yh1C95dLts"
         }
       ],
       "services": {

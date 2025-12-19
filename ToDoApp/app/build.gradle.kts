@@ -7,12 +7,12 @@ plugins {
 
 android {
     namespace = "com.example.todoapp"
-    compileSdk = 35 // Ajustado a 35 (36 es experimental/preview a veces y da problemas)
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.example.todoapp"
-        minSdk = 26 // 34 es muy alto para minSdk (solo Pixel 8+), 24-26 es estándar
-        targetSdk = 34 // Ajustado a estable
+        minSdk = 26
+        targetSdk = 34
         versionCode = 1
         versionName = "1.0"
 
@@ -42,25 +42,23 @@ android {
 
 dependencies {
     // --- FIREBASE ---
-    // Importante: Usamos el BOM para que gestione las versiones compatibles
+    // 1. La Plataforma (BOM) gestiona las versiones
     implementation(platform("com.google.firebase:firebase-bom:33.7.0"))
 
-    // Al usar el BOM, NO ponemos número de versión en estas líneas:
+    // 2. Las librerías (SIN NÚMERO DE VERSIÓN)
     implementation("com.google.firebase:firebase-auth-ktx")
     implementation("com.google.firebase:firebase-firestore-ktx")
     implementation("com.google.firebase:firebase-analytics")
-
-    implementation("androidx.compose.material:material-icons-extended")
 
     // --- ANDROID & COMPOSE ---
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
 
-    // BOM de Compose (Gestiona versiones de UI)
+    // BOM de Compose
     implementation(platform(libs.androidx.compose.bom))
 
-    // Librerías de UI (Sin versión, la cogen del BOM)
+    // UI Compose (Sin versiones)
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
@@ -68,11 +66,9 @@ dependencies {
 
     // Navegación
     implementation(libs.androidx.navigation.compose)
-    implementation(libs.firebase.auth.ktx)
 
-    // Iconos extendidos (Opcional, si lo usas)
-    // Nota: Si 'libs.androidx...' da error, usa la línea comentada de abajo:
-    // implementation("androidx.compose.material:material-icons-extended")
+    // Iconos extendidos
+    implementation("androidx.compose.material:material-icons-extended")
 
     // --- TESTING ---
     testImplementation(libs.junit)

@@ -19,7 +19,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CalendarToday
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
@@ -37,6 +37,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.File
 import java.util.Calendar
+import com.google.firebase.auth.FirebaseAuth
 
 
 @Composable
@@ -102,7 +103,7 @@ fun Pantalla2(onIrLogin: () -> Unit) {
     }
 
     LaunchedEffect(listaTareas.size) {
-        delay(1800L) // 3 minutos
+        delay(18000L) // 3 minutos
 
         val channelId = "canal_inactividad"
         val notificationManager =
@@ -196,8 +197,8 @@ fun Pantalla2(onIrLogin: () -> Unit) {
                 confirmButton = {
                     Button(onClick = {
                         scope.launch {
-                            repo.borrarTarea(tarea.id)
-                            listaTareas.remove(tarea)
+                            repo.borrarTarea(tareaParaBorrar.id)
+                            listaTareas.remove(tareaParaBorrar)
                             mostrardialogoborrar = false
                             tareaborrar = null
                         }
@@ -345,7 +346,7 @@ fun Pantalla2(onIrLogin: () -> Unit) {
                     trailingIcon = {
                         IconButton(onClick = { datePicker.show() }) {
                             Icon(
-                                Icons.Filled.CalendarToday,
+                                Icons.Filled.DateRange,
                                 contentDescription = "Seleccionar fecha"
                             )
                         }
