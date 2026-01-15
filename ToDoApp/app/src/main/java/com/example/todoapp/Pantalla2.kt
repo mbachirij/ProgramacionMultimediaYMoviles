@@ -70,6 +70,8 @@ fun Pantalla2(onIrLogin: () -> Unit) {
     val repo = remember { TareaRepositoryFirestore() }
     val listaTareas = remember { mutableStateListOf<Tarea>() }
 
+    var pokemon: String = remember { mutableStateOf("").toString() }
+
     // Cargar tareas desde Firestore
     LaunchedEffect(Unit) {
         listaTareas.clear()
@@ -373,6 +375,7 @@ fun Pantalla2(onIrLogin: () -> Unit) {
                         if (nuevaTareaTexto.isNotBlank() && nuevaTareaFecha.isNotBlank()) {
                             scope.launch {
                                 repo.insertarTarea(nuevaTareaTexto, nuevaTareaFecha)
+                                pokemon = nuevaTareaTexto.trim().split(" ").last()
                                 listaTareas.clear()
                                 listaTareas.addAll(repo.obtenerTareas())
                                 nuevaTareaTexto = ""
