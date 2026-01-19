@@ -1,4 +1,4 @@
-package com.example.todoapp
+package com.example.todoapp.ui.register
 
 import android.widget.Toast
 import androidx.compose.foundation.Image
@@ -11,8 +11,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -26,6 +28,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.todoapp.R
 import com.google.firebase.auth.FirebaseAuth
 
 @Composable
@@ -64,7 +67,7 @@ fun Registro(onVolverLogin: () -> Unit){
             onValueChange = { email = it},
             label = { Text("Email") },
             singleLine = true,
-            colors = androidx.compose.material3.TextFieldDefaults.colors(
+            colors = TextFieldDefaults.colors(
                 focusedContainerColor = Color.Transparent,
                 unfocusedContainerColor = Color.Transparent,
                 focusedTextColor = Color.White,
@@ -85,7 +88,7 @@ fun Registro(onVolverLogin: () -> Unit){
             onValueChange = { pass = it },
             label = { Text("Contraseña")},
             singleLine = true,
-            colors = androidx.compose.material3.TextFieldDefaults.colors(
+            colors = TextFieldDefaults.colors(
                 focusedContainerColor = Color.Transparent,
                 unfocusedContainerColor = Color.Transparent,
                 focusedTextColor = Color.White,
@@ -102,7 +105,7 @@ fun Registro(onVolverLogin: () -> Unit){
         )
 
         Button(
-            colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+            colors = ButtonDefaults.buttonColors(
                 containerColor = Color.White,
                 contentColor = Color.Black
             ),

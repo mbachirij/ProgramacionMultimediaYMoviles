@@ -1,5 +1,7 @@
-package com.example.todoapp
+package com.example.todoapp.ui.home
 
+import android.Manifest
+import android.R
 import android.app.DatePickerDialog
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -33,6 +35,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.app.NotificationCompat
+import com.example.todoapp.Tarea
+import com.example.todoapp.data.repository.TareaRepositoryFirestore
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.File
@@ -121,7 +125,7 @@ fun Pantalla2(onIrLogin: () -> Unit) {
         }
 
         val builder = NotificationCompat.Builder(context, channelId)
-            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setSmallIcon(R.drawable.ic_dialog_info)
             .setContentTitle("Recordatorio")
             .setContentText("Hace rato que no añades ninguna tarea")
             .setPriority(NotificationCompat.PRIORITY_HIGH)
@@ -137,7 +141,7 @@ fun Pantalla2(onIrLogin: () -> Unit) {
             ) { }
 
         LaunchedEffect(Unit) {
-            permissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+            permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
         }
     }
 
@@ -238,7 +242,7 @@ fun Pantalla2(onIrLogin: () -> Unit) {
                 fontWeight = FontWeight.Bold
             )
             IconButton(
-                colors = androidx.compose.material3.IconButtonDefaults.iconButtonColors(
+                colors = IconButtonDefaults.iconButtonColors(
                     containerColor = Color(0x41000000),
                     contentColor = Color.Black
                 ),
@@ -294,7 +298,7 @@ fun Pantalla2(onIrLogin: () -> Unit) {
                     contentDescription = null)
             },
             singleLine = true,
-            colors = androidx.compose.material3.TextFieldDefaults.colors(
+            colors = TextFieldDefaults.colors(
                 focusedContainerColor = Color.Transparent,
                 unfocusedContainerColor = Color.Transparent,
                 focusedTextColor = Color.White,
@@ -318,7 +322,7 @@ fun Pantalla2(onIrLogin: () -> Unit) {
                 onValueChange = { nuevaTareaTexto = it },
                 label = { Text("Nueva tarea")},
                 singleLine = true,
-                colors = androidx.compose.material3.TextFieldDefaults.colors(
+                colors = TextFieldDefaults.colors(
                     focusedContainerColor = Color.Transparent,
                     unfocusedContainerColor = Color.Transparent,
                     focusedTextColor = Color.White,
@@ -353,7 +357,7 @@ fun Pantalla2(onIrLogin: () -> Unit) {
                             )
                         }
                     },
-                    colors = androidx.compose.material3.TextFieldDefaults.colors(
+                    colors = TextFieldDefaults.colors(
                         focusedContainerColor = Color.Transparent,
                         unfocusedContainerColor = Color.Transparent,
                         focusedTextColor = Color.White,
@@ -367,21 +371,68 @@ fun Pantalla2(onIrLogin: () -> Unit) {
                 )
 
                 Button(
-                    colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                    colors = ButtonDefaults.buttonColors(
                         containerColor = Color(0x41000000),
                         contentColor = Color.White
                     ),
                     onClick = {
                         if (nuevaTareaTexto.isNotBlank() && nuevaTareaFecha.isNotBlank()) {
+
                             scope.launch {
-                                repo.insertarTarea(nuevaTareaTexto, nuevaTareaFecha)
-                                pokemon = nuevaTareaTexto.trim().split(" ").last()
+                                // cojo la última palabra
+                                val ultimaPalabra = nuevaTareaTexto.split(" ").last().trim()
+
+
+                                // Variables vacias por si no encuentro nada
+                                var nombre: String? = null
+                                var imagen: String? = null
+                                var tipo: String? = null
+                                var stats: String? = null
+
+
+
+                                // compruebo que ultima palabra no esté vacía
+                                if (ultimaPalabra.isNotEmpty()) {
+                                    try {
+                                        val respuesta = com.example.todoapp.data.network.RetrofitClient.api.getPokemonByName(ultimaPalabra)
+
+                                        // si estoy en este paso es que ya he enconttrado el pokemon
+                                        nombre = respuesta.name
+                                        imagen = respuesta.sprites.front_default
+                                        tipo = respuesta.types.firstOrNull()?.type?.name
+
+                                        // esto es para poner los stats bonitos
+                                        stats = respuesta.stats.joinToString(", ") { stat ->
+                                            "${stat.stat.name}: ${stat.base_stat}"
+                                        }
+
+                                        Toast.makeText(context, "¡Pokémon $nombre detectado!", Toast.LENGTH_SHORT).show()
+                                    } catch (e: Exception) {
+                                        // Si falla (no es un pokemon), seguimos normal sin datos extra
+                                        println("No es un pokemon o error de red: ${e.message}")
+                                    }
+                                }
+
+                                // 3. Crear el objeto Tarea
+                                val nuevaTarea = Tarea(
+                                    tarea = nuevaTareaTexto,
+                                    fecha = nuevaTareaFecha,
+                                    pokemonNombre = nombre,
+                                    pokemonImagen = imagen,
+                                    pokemonTipo = tipo,
+                                    pokemonStats = stats
+                                )
+
+                                // Guardar en Firestore
+                                repo.insertarTarea(nuevaTarea) // <--- Nota: Actualiza tu repositorio para aceptar el objeto Tarea
+
+                                // Limpiar los campos
                                 listaTareas.clear()
                                 listaTareas.addAll(repo.obtenerTareas())
                                 nuevaTareaTexto = ""
                                 nuevaTareaFecha = ""
-                                Toast.makeText(context, "Tarea añadida", Toast.LENGTH_SHORT).show()
                             }
+
                         } else {
                             Toast.makeText(context, "Rellena texto y fecha", Toast.LENGTH_SHORT).show()
                         }
@@ -425,7 +476,19 @@ fun Pantalla2(onIrLogin: () -> Unit) {
                             .padding(16.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
+                        // muestro la imagen del pokemon si la hay
+                        if(tarea.pokemonImagen != null){
+                            // coil es una librería para cargar imágenes
+                            coil.compose.AsyncImage(
+                                model = tarea.pokemonImagen,
+                                contentDescription = "Pokemon",
+                                modifier = Modifier
+                                    .size(50.dp)
+                                    .padding(end = 8.dp)
+                            )
+                        }
 
+                        // Columna con los textos de la tarea
                         Column(
                             modifier = Modifier.weight(1f)
                         ) {
@@ -441,6 +504,21 @@ fun Pantalla2(onIrLogin: () -> Unit) {
                                 color = Color.LightGray,
                                 fontSize = 14.sp
                             )
+
+                            // si el pokemon tiene más datos, los muestro
+                            if(tarea.pokemonStats != null){
+                                Text(
+                                    text = "Tipo: "+tarea.pokemonStats,
+                                    color = Color.LightGray,
+                                    fontSize = 12.sp
+                                )
+                                Text(
+                                    text = "Stats: "+tarea.pokemonStats,
+                                    color = Color.LightGray,
+                                    fontSize = 12.sp
+                                )
+                            }
+
                         }
 
                         IconButton(

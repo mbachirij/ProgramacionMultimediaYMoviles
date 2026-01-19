@@ -1,21 +1,27 @@
 package com.example.todoapp.data.network
 
+import com.example.todoapp.data.model.Pokemon
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
 
-data class PokemonResponse(
-    val results: List<PokemonItem>
-)
+import retrofit2.http.GET
+import retrofit2.http.Path
 
-data class PokemonItem(
-    val name: String,
-    val url: String
-) {
-    // Obtiene el ID desde la URL
-    fun getId(): String {
-        return url.trimEnd('/').split("/").last()
-    }
+// Aquí defino que pido un pokemon concreto por nombre a la API
+interface PokemonApi {
+    @GET("pokemon/{name}")
+    suspend fun getPokemonByName(@Path("name") name: String): Pokemon
+}
 
-    // Construye la URL de la imagen del sprite
-    fun getImageUrl(): String {
-        return "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${getId()}.png"
+// aquí creamos la conexion con la API
+object RetrofitClient {
+    private const val BASE_URL = "https://pokeapi.co/api/v2/"
+
+    val api: PokemonApi by lazy {
+        Retrofit.Builder()
+            .baseUrl(BASE_URL)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+            .create(PokemonApi::class.java)
     }
 }

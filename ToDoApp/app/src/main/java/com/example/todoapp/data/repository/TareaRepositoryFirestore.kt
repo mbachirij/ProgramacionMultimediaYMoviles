@@ -1,6 +1,6 @@
-package com.example.todoapp
+package com.example.todoapp.data.repository
 
-
+import com.example.todoapp.Tarea
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
@@ -21,16 +21,27 @@ class TareaRepositoryFirestore {
             Tarea(
                 id = doc.id,
                 tarea = doc.getString("tarea") ?: "",
-                fecha = doc.getString("fecha") ?: ""
+                fecha = doc.getString("fecha") ?: "",
+
+                // mapeamos los campos nuevos para los Pokemon
+                pokemonNombre = doc.getString("pokemonNombre"),
+                pokemonImagen = doc.getString("pokemonImagen"),
+                pokemonTipo = doc.getString("pokemonTipo"),
+                pokemonStats = doc.getString("pokemonStats")
             )
         }
     }
 
-    suspend fun insertarTarea(tarea: String, fecha: String) {
+    suspend fun insertarTarea(tarea: Tarea) {
         val data = mapOf(
-            "tarea" to tarea,
-            "fecha" to fecha
+            "tarea" to tarea.tarea,
+            "fecha" to tarea.fecha,
+            "pokemonNombre" to tarea.pokemonNombre,
+            "pokemonImagen" to tarea.pokemonImagen,
+            "pokemonTipo" to tarea.pokemonTipo,
+            "pokemonStats" to tarea.pokemonStats
         )
+
         coleccionTareas().add(data).await()
     }
 

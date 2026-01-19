@@ -4,7 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import com.example.todoapp.TodoApp
+import com.example.todoapp.ui.navigation.TodoApp
 import com.example.todoapp.ui.theme.TodoappTheme
 
 
