@@ -1,0 +1,38 @@
+// compruebo que ultima palabra no esté vacía
+                                if (ultimaPalabra.isNotEmpty()) {
+                                    try {
+                                        val respuesta = com.example.todoapp.data.network.RetrofitClient.api.getPokemonByName(ultimaPalabra)
+
+                                        // si estoy en este paso es que ya he enconttrado el pokemon
+                                        nombre = respuesta.name
+                                        imagen = respuesta.sprites.front_default
+                                        tipo = respuesta.types.toString()
+
+                                        // esto es para poner los stats bonitos
+                                        stats = respuesta.stats.joinToString(", ") { stat ->
+                                            "${stat.stat.name}: ${stat.base_stat} \n"
+                                        }
+
+                                        Toast.makeText(context, "¡Pokémon $nombre detectado!", Toast.LENGTH_SHORT).show()
+                                    } catch (e: Exception) {
+                                        // Si falla (no es un pokemon), seguimos normal sin datos extra
+                                        println("No es un pokemon o error de red: ${e.message}")
+                                    }
+                                }
+
+
+
+
+// si el pokemon tiene más datos, los muestro
+                            if(tarea.pokemonStats != null){
+                                Text(
+                                    text = "Tipo: "+tarea.pokemonStats,
+                                    color = Color.LightGray,
+                                    fontSize = 12.sp
+                                )
+                                Text(
+                                    text = "Stats: "+tarea.pokemonStats,
+                                    color = Color.LightGray,
+                                    fontSize = 12.sp
+                                )
+                            }
