@@ -20,7 +20,7 @@ class PokemonViewModel : ViewModel() {
         .addConverterFactory(GsonConverterFactory.create())
         .build()
         .create(PokemonApi::class.java)
-
+    // Esta variable
     private val repo = PokemonRepository(api)  
 
     private val _pokemonList = MutableStateFlow<List<PokemonItem>>(emptyList())
