@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "572260159852",
+    "project_id": "pikapika-b8292",
+    "storage_bucket": "pikapika-b8292.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:572260159852:android:4fd5c5aa03bacee1a1a349",
+        "android_client_info": {
+          "package_name": "com.example.pikapika"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAh22lQB2bbFcHJJhdEaZZaObjp_RtYU2o"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
