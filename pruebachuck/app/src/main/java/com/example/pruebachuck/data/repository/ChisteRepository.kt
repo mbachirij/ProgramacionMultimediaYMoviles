@@ -1,12 +1,16 @@
 package com.example.pruebachuck.data.repository
 
+import androidx.lifecycle.viewModelScope
+import com.example.pruebachuck.data.local.ChisteDao
 import com.example.pruebachuck.data.model.Chiste
+import com.example.pruebachuck.data.model.ChisteEntity
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 
 // Esta clase es para obtener los datos de Firestore
-class ChisteRepositoryFirestore {
+class ChisteRepository(private val dao: ChisteDao) {
 
     // esta variable es para obtener el usuario actual
     private val auth = FirebaseAuth.getInstance()
@@ -15,37 +19,50 @@ class ChisteRepositoryFirestore {
 
 
     private fun coleccionChistes() =
-        db.collection("users")
-            .document(auth.currentUser!!.uid)
-            .collection("chistes")
-
-    suspend fun obtenerChistes(): List<Chiste> {
-        // Pido los datos y espero (await)
-        val snapshot = coleccionChistes().get().await()
-
-        // Aquí convierto cada documento de Firebase en un objeto Chiste
-        return snapshot.documents.map { doc ->
-            Chiste(
-                id = doc.id,
-                texto = doc.getString("value") ?: "",
-                iconoUrl = doc.getString("icon_url") ?: ""
-            )
+        auth.currentUser?.let { user ->
+            db.collection("users")
+                .document(user.uid)
+                .collection("chistes")
         }
-    }
+    fun obtenerChistesLocal() = dao.obtenerChistes()
 
-    suspend fun insertarChiste(chiste: Chiste) {
+    suspend fun insertarChiste(entity: ChisteEntity) {
+
+        // Guardar en local
+        dao.insertarChiste(entity)
+
+        val ref = coleccionChistes() ?: return
+
         val data = mapOf(
-            "texto" to chiste.texto,
-            "iconoUrl" to chiste.iconoUrl,
-            "fecha_guardado" to System.currentTimeMillis() // Aquí guardos la fecha actual
+            "texto" to entity.texto,
+            "iconoUrl" to entity.iconoUrl,
+            "fecha_guardado" to System.currentTimeMillis()
         )
-        // esto haría duplicados
-        // coleccionChistes().add(data).await()
-        // esto no porque usa la id del chiste como nombre
-        coleccionChistes().document(chiste.id).set(data).await()
+
+        ref.document(entity.id).set(data).await()
     }
 
-    suspend fun borrarChiste(id: String) {
-        coleccionChistes().document(id).delete().await()
+    suspend fun borrarChiste(entity: ChisteEntity) {
+
+        dao.borrarChiste(entity)
+
+        val ref = coleccionChistes() ?: return
+        ref.document(entity.id).delete().await()
+    }
+
+    suspend fun sincronizarChistes() {
+
+        val ref = coleccionChistes() ?: return
+
+        val snapshot = ref.get().await()
+
+        snapshot.documents.forEach { doc ->
+            val entity = ChisteEntity(
+                id = doc.id,
+                texto = doc.getString("texto") ?: "",
+                iconoUrl = doc.getString("iconoUrl") ?: ""
+            )
+            dao.insertarChiste(entity)
+        }
     }
 }

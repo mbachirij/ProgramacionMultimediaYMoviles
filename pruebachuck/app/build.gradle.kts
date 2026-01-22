@@ -5,6 +5,8 @@ plugins {
 
     // ROOM
     id("kotlin-kapt")
+    // FireStore
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -46,6 +48,7 @@ android {
 
 dependencies {
 
+    implementation(libs.androidx.compose.runtime.livedata)
     // ... Room ...
     val room_version = "2.6.1"
     // La librería principal de Room
@@ -62,11 +65,12 @@ dependencies {
 
     // --- FIREBASE ---
     // 1. La Plataforma (BOM) gestiona las versiones
-    implementation(platform("com.google.firebase:firebase-bom:33.7.0"))
+    implementation(platform("com.google.firebase:firebase-bom:34.8.0"))
 
     // 2. Las librerías (SIN NÚMERO DE VERSIÓN)
-    implementation("com.google.firebase:firebase-auth-ktx")
-    implementation("com.google.firebase:firebase-firestore-ktx")
+    // SÍ (sin -ktx)
+    implementation("com.google.firebase:firebase-auth")
+    implementation("com.google.firebase:firebase-firestore")
     implementation("com.google.firebase:firebase-analytics")
 
     implementation(libs.androidx.core.ktx)

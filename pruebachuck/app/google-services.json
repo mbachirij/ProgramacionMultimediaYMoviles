@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "955829045339",
+    "project_id": "pruebachuck-a8f92",
+    "storage_bucket": "pruebachuck-a8f92.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:955829045339:android:86f30cba6e75a06382d77e",
+        "android_client_info": {
+          "package_name": "com.example.pruebachuck"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBD1Z_Am-S12fL4lq76dz0CXg0VndL1xvo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

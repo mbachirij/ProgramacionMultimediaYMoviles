@@ -1,5 +1,6 @@
 package com.example.pruebachuck.ui.screens
 
+import android.app.Application
 import android.app.DatePickerDialog
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -11,11 +12,15 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -25,7 +30,9 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -38,17 +45,33 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.pruebachuck.R
+import com.example.pruebachuck.ui.ChisteViewModel
 import kotlinx.coroutines.launch
 import java.util.Calendar
 
 @Composable
-fun Principal(onIrAlLogin: () -> Unit){
+fun Principal(
+    onIrAlLogin: () -> Unit,
+    viewModel: ChisteViewModel = viewModel(
+        factory = ViewModelProvider.AndroidViewModelFactory.getInstance(
+            LocalContext.current.applicationContext as Application
+        )
+    )
+){
+
+
+
+    val chistes by viewModel.listaChistes.observeAsState(emptyList())
+
+
 
     var preferencias by remember { mutableStateOf(false) }
     var mostrarpreferencias by remember { mutableStateOf(false) }
 
-    var nuevoPokemon by remember { mutableStateOf("") }
+    var nuevoChiste by remember { mutableStateOf("") }
 
     val context = LocalContext.current
 
@@ -65,7 +88,9 @@ fun Principal(onIrAlLogin: () -> Unit){
         calendar.get(Calendar.DAY_OF_MONTH)
     )
 
-
+    LaunchedEffect(Unit) {
+        viewModel.sincronizarSiHayUsuario()
+    }
 
     Column(
         modifier = Modifier
@@ -84,7 +109,7 @@ fun Principal(onIrAlLogin: () -> Unit){
         ) {
 
             Text(
-                "Bienvenido a tu app de Pokemons",
+                "Bienvenido a tu app Chuck Norris",
                 fontWeight = FontWeight.Bold,
                 color = Color.White
             )
@@ -132,8 +157,8 @@ fun Principal(onIrAlLogin: () -> Unit){
         Column(modifier = Modifier.padding(16.dp)){
 
             OutlinedTextField(
-                value = nuevoPokemon,
-                onValueChange = { nuevoPokemon = it },
+                value = nuevoChiste,
+                onValueChange = { nuevoChiste = it },
                 label = { Text(
                     "Escribe el nombre de un pokemon. Ejemplo: Pikachu",
                     fontSize = 12.sp
@@ -193,13 +218,53 @@ fun Principal(onIrAlLogin: () -> Unit){
                         contentColor = Color.White
                     ),
                     onClick = {
-                        /* AQUÍ LA LÓGICA PARA AÑADIR EL POKEMON */
+                        val chiste = viewModel.cargarChisteAleatorio()
+
 
                     },
                 ) {
                     Text("Añadir")
                 }
+
             }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            LazyColumn(
+                modifier = Modifier.fillMaxSize()
+            ) {
+                items(chistes) { chiste ->
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = Color.DarkGray
+                        )
+                    ) {
+                        Column(modifier = Modifier.padding(12.dp)) {
+
+                            Text(
+                                text = chiste.texto,
+                                color = Color.White,
+                                fontSize = 14.sp
+                            )
+
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            Button(
+                                onClick = { viewModel.borrarChiste(chiste) },
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color.Red
+                                )
+                            ) {
+                                Text("Borrar")
+                            }
+                        }
+                    }
+                }
+            }
+
 
         }
 

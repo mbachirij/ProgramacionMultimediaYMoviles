@@ -20,7 +20,7 @@ interface  ChisteDao {
 
     // Flow es para que se actualice automáticamente la lista cuando borras o insertas algo
     @Query("SELECT * FROM tabla_chistes")
-    suspend fun obtenerChistes(): Flow<List<ChisteEntity>>
+    fun obtenerChistes(): Flow<List<ChisteEntity>>
 
     // Consulta para buscar dinámicamente
     @Query("SELECT * FROM tabla_chistes WHERE texto LIKE '%' || :texto || '%' ")
